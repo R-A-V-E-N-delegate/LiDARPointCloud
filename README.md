@@ -4,6 +4,7 @@ An iOS app that captures real-time LiDAR depth data and renders it as an interac
 
 ## Features
 
+### Core
 - **Real-time LiDAR capture** - Uses ARKit's sceneDepth API to capture depth data at 30fps
 - **Metal-based rendering** - High-performance point cloud visualization with custom shaders
 - **Multiple color modes**:
@@ -11,8 +12,17 @@ An iOS app that captures real-time LiDAR depth data and renders it as an interac
   - Confidence (quality-based coloring)
   - White (monochrome)
   - Rainbow (cycling hue)
-- **Interactive camera** - Pan to rotate, pinch to adjust point size
 - **Adjustable density** - Control point cloud density for performance tuning
+
+### Interaction
+- **Pan** - Rotate the view
+- **Pinch** - Adjust point size
+- **Double-tap** - Reset camera to default position (with haptic feedback)
+- **Freeze** - Pause point cloud updates to inspect current capture
+
+### Export
+- **PLY export** - Save point cloud to PLY format with RGB colors
+- **Share** - Share exported files via iOS share sheet
 
 ## Requirements
 
@@ -60,14 +70,28 @@ let pointWorld = cameraTransform * SIMD4(xCam, -yCam, zCam, 1.0)
 2. Grant camera access when prompted
 3. Tap **Start** to begin scanning
 4. Point the camera at objects to capture the point cloud
-5. Use gestures:
+5. Use gestures to navigate:
    - **Pan**: Rotate the view
    - **Pinch**: Adjust point size
-6. Adjust color mode and density in the control panel
+   - **Double-tap**: Reset view
+6. Use the control panel to:
+   - Change color mode
+   - Adjust point density
+   - Freeze/resume scanning
+   - Export to PLY
+   - Clear captured points
 
 ## Building
 
 Open `LiDARPointCloud.xcodeproj` in Xcode and run on a physical device (simulator doesn't support LiDAR).
+
+## Files
+
+- `ARSessionManager.swift` - ARKit session, depth extraction, PLY export
+- `PointCloudRenderer.swift` - Metal renderer with camera controls
+- `Shaders.metal` - Vertex and fragment shaders for point rendering
+- `ARViewContainer.swift` - SwiftUI wrapper for Metal view with gestures
+- `ContentView.swift` - Main UI with controls and stats
 
 ## License
 
