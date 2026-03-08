@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var isFrozen = false
     @State private var showStats = false
     @State private var screenshotFlash = false
+    @State private var showExportAlert = false
+    @State private var exportedFileURL: URL?
 
     var body: some View {
         ZStack {
@@ -143,6 +145,20 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .alert("Export Complete", isPresented: $showExportAlert) {
+            Button("OK", role: .cancel) { }
+            if let url = exportedFileURL {
+                ShareLink(item: url) {
+                    Text("Share")
+                }
+            }
+        } message: {
+            if let url = exportedFileURL {
+                Text("Point cloud saved to:\n\(url.lastPathComponent)")
+            } else {
+                Text("Export failed")
+            }
+        }
     }
 
     // MARK: - Subviews
@@ -226,6 +242,20 @@ struct ContentView: View {
                 ), in: 1...4, step: 1)
             }
 
+            // Export button
+            Button(action: exportPointCloud) {
+                HStack {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Export PLY")
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(sessionManager.pointCount > 0 ? Color.purple.opacity(0.2) : Color.gray.opacity(0.1))
+                .foregroundColor(sessionManager.pointCount > 0 ? .purple : .gray)
+                .cornerRadius(12)
+            }
+            .disabled(sessionManager.pointCount == 0)
+
             // Bottom buttons row
             HStack(spacing: 12) {
                 // Reset view button
@@ -299,6 +329,13 @@ struct ContentView: View {
 
     private func clearPoints() {
         sessionManager.clearPoints()
+    }
+
+    private func exportPointCloud() {
+        if let url = sessionManager.exportToPLY() {
+            exportedFileURL = url
+            showExportAlert = true
+        }
     }
 
     private func toggleFreeze() {

@@ -65,6 +65,52 @@ class ARSessionManager: NSObject, ObservableObject {
         pointCount = 0
     }
 
+    /// Export point cloud to PLY format
+    /// Returns the file URL if successful
+    func exportToPLY() -> URL? {
+        guard !pointCloud.isEmpty else { return nil }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+        let filename = "pointcloud_\(dateFormatter.string(from: Date())).ply"
+
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(filename)
+
+        var plyContent = """
+        ply
+        format ascii 1.0
+        element vertex \(pointCloud.count)
+        property float x
+        property float y
+        property float z
+        property uchar red
+        property uchar green
+        property uchar blue
+        end_header
+
+        """
+
+        for i in 0..<pointCloud.count {
+            let point = pointCloud[i]
+            let color = pointColors[i]
+
+            let r = UInt8(min(max(color.x * 255, 0), 255))
+            let g = UInt8(min(max(color.y * 255, 0), 255))
+            let b = UInt8(min(max(color.z * 255, 0), 255))
+
+            plyContent += "\(point.x) \(point.y) \(point.z) \(r) \(g) \(b)\n"
+        }
+
+        do {
+            try plyContent.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileURL
+        } catch {
+            print("Failed to export PLY: \(error)")
+            return nil
+        }
+    }
+
     /// Convert depth buffer to 3D point cloud
     private func processDepthFrame(_ frame: ARFrame) {
         guard let depthData = frame.smoothedSceneDepth ?? frame.sceneDepth else { return }
