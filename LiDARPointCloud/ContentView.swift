@@ -17,7 +17,8 @@ struct ContentView: View {
             MetalPointCloudView(
                 sessionManager: sessionManager,
                 cameraRotation: $cameraRotation,
-                pointSize: $pointSize
+                pointSize: $pointSize,
+                onDoubleTap: resetView
             )
             .ignoresSafeArea()
 

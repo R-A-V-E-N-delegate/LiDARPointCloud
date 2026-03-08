@@ -1,11 +1,13 @@
 import SwiftUI
 import MetalKit
+import UIKit
 
 /// SwiftUI wrapper for the Metal point cloud view
 struct MetalPointCloudView: UIViewRepresentable {
     @ObservedObject var sessionManager: ARSessionManager
     @Binding var cameraRotation: SIMD2<Float>
     @Binding var pointSize: Float
+    var onDoubleTap: (() -> Void)?
 
     func makeUIView(context: Context) -> MTKView {
         let mtkView = MTKView()
@@ -24,6 +26,10 @@ struct MetalPointCloudView: UIViewRepresentable {
         let pinchGesture = UIPinchGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePinch(_:)))
         mtkView.addGestureRecognizer(pinchGesture)
 
+        let doubleTapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleDoubleTap(_:)))
+        doubleTapGesture.numberOfTapsRequired = 2
+        mtkView.addGestureRecognizer(doubleTapGesture)
+
         return mtkView
     }
 
@@ -34,6 +40,7 @@ struct MetalPointCloudView: UIViewRepresentable {
         )
         context.coordinator.renderer?.cameraRotation = cameraRotation
         context.coordinator.renderer?.pointSize = pointSize
+        context.coordinator.onDoubleTap = onDoubleTap
     }
 
     func makeCoordinator() -> Coordinator {
@@ -43,9 +50,16 @@ struct MetalPointCloudView: UIViewRepresentable {
     class Coordinator: NSObject {
         var parent: MetalPointCloudView
         var renderer: PointCloudRenderer?
+        var onDoubleTap: (() -> Void)?
+
+        private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        private let selectionFeedback = UISelectionFeedbackGenerator()
 
         init(_ parent: MetalPointCloudView) {
             self.parent = parent
+            super.init()
+            impactFeedback.prepare()
+            selectionFeedback.prepare()
         }
 
         @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
@@ -68,6 +82,11 @@ struct MetalPointCloudView: UIViewRepresentable {
                 parent.pointSize = max(1.0, min(20.0, parent.pointSize))
                 gesture.scale = 1.0
             }
+        }
+
+        @objc func handleDoubleTap(_ gesture: UITapGestureRecognizer) {
+            impactFeedback.impactOccurred()
+            onDoubleTap?()
         }
     }
 }
