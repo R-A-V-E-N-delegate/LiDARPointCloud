@@ -25,6 +25,7 @@ class ARSessionManager: NSObject, ObservableObject {
 
     private var lastUpdateTime: TimeInterval = 0
     private let updateInterval: TimeInterval = 1.0 / 30.0  // 30 FPS max
+    private var isPaused = false
 
     override init() {
         super.init()
@@ -48,6 +49,20 @@ class ARSessionManager: NSObject, ObservableObject {
     func stopSession() {
         session.pause()
         isRunning = false
+    }
+
+    func pauseUpdates() {
+        isPaused = true
+    }
+
+    func resumeUpdates() {
+        isPaused = false
+    }
+
+    func clearPoints() {
+        pointCloud = []
+        pointColors = []
+        pointCount = 0
     }
 
     /// Convert depth buffer to 3D point cloud
@@ -170,6 +185,8 @@ class ARSessionManager: NSObject, ObservableObject {
 
 extension ARSessionManager: ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        guard !isPaused else { return }
+
         let currentTime = frame.timestamp
         guard currentTime - lastUpdateTime >= updateInterval else { return }
         lastUpdateTime = currentTime
